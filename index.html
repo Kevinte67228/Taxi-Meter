@@ -422,7 +422,7 @@
 <div class="overlay" id="friendPickerOverlay">
   <div class="panel">
     <h2 id="friendPickerTitle">選擇親友</h2>
-    <div class="hint" style="margin-bottom:1.4dvh;">套用後，費用會繼續套用折扣的方式累進計算——行程若還沒結束，車資會邊跳錶邊自動打折，記帳金額也會跟著即時更新，直到你按「停」或「空」為止。</div>
+    <div class="hint" style="margin-bottom:1.4dvh;">套用後，車資會即時套用折扣持續計算，記帳金額也會跟著同步更新。如果重複按這顆按鈕，折扣會以倍率疊加（例如打 8 折按兩次＝0.8×0.8＝6.4折，以此類推），直到你按「停」或「空」為止。</div>
     <div id="friendPickerList"></div>
     <div class="panel-actions" style="margin-top:1.4dvh;">
       <button class="btn-close" id="friendPickerCancelBtn">取消</button>
@@ -986,6 +986,8 @@
   let friendDiscountActive = false;
   let currentFriendName = null;
   let friendLedgerBaseline = 0;
+  let friendDiscountMultiplier = 1; // 每套用一次就乘上一次折扣比例，可疊加
+  let friendDiscountPressCount = 0;
 
   const friendEls = {
     enabled: document.getElementById('friendEnabled'),
@@ -1108,12 +1110,23 @@
 
   function applyFriendDiscount(name){
     playBeep();
+    if (!friendDiscountActive) {
+      friendLedgerBaseline = ledger[name] || 0;
+    } else if (name !== currentFriendName) {
+      // 換人時，以新的人目前的帳款當作新的記帳基準，但折扣倍率繼續疊加
+      friendLedgerBaseline = ledger[name] || 0;
+    }
     friendDiscountActive = true;
     friendDiscountUsedThisTrip = true;
     currentFriendName = name;
-    friendLedgerBaseline = ledger[name] || 0;
+    friendDiscountMultiplier *= (friendConfig.discountRatio / 10);
+    friendDiscountPressCount += 1;
+
+    const foldValue = (friendDiscountMultiplier * 10).toFixed(2).replace(/\.?0+$/, '');
     friendBadgeWrap.style.display = 'flex';
-    friendBadge.textContent = '👥 ' + name + ' 折扣中（' + friendConfig.discountRatio + '折）';
+    friendBadge.textContent = '👥 ' + name + ' 折扣中（' + foldValue + '折）' +
+      (friendDiscountPressCount > 1 ? '　已疊加 ' + friendDiscountPressCount + ' 次' : '');
+
     friendPickerOverlay.classList.remove('open');
     updateFareDisplay();
   }
@@ -1265,7 +1278,7 @@
   function updateFareDisplay(){
     let meterFare = computeMeterFare();
     if (friendDiscountActive) {
-      meterFare = Math.round(meterFare * friendConfig.discountRatio / 10);
+      meterFare = Math.round(meterFare * friendDiscountMultiplier);
       if (currentFriendName) {
         ledger[currentFriendName] = friendLedgerBaseline + meterFare;
         saveLedger();
@@ -1345,6 +1358,7 @@
     totalDistanceKm = 0; lowSpeedSeconds = 0; elapsedSeconds = 0; tollFee = 0;
     lastPos = null; gpsOk = false; startedAt = null;
     friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null; friendLedgerBaseline = 0;
+    friendDiscountMultiplier = 1; friendDiscountPressCount = 0;
     friendBadgeWrap.style.display = 'none';
     document.getElementById('fare').textContent = '0';
     document.getElementById('toll').textContent = '.';
