@@ -1,8 +1,9 @@
 {
+  "id": "/Taxi-Meter/",
   "name": "招財計程計費器 HC-1",
   "short_name": "招財計費器",
   "description": "招財計程車計費器面板複刻畫面",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
