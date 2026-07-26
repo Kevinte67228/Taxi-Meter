@@ -685,7 +685,14 @@
   tick();
   setInterval(tick, 1000);
 
-  if (screen.orientation && screen.orientation.lock) {
+  // 已安裝的 WebAPK／standalone 模式下，橫向鎖定完全交給 manifest.json 的
+  // "orientation":"landscape" 由系統原生處理；這裡如果 JS 再搶著鎖一次，
+  // 在 App 剛啟動、Activity 都還沒就緒時呼叫，曾是造成啟動異常的可疑點，故移除。
+  // 只有在「一般瀏覽器分頁」開啟時（沒有原生鎖定），才用 JS 幫忙鎖向，方便使用。
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.matchMedia('(display-mode: fullscreen)').matches
+    || window.navigator.standalone === true;
+  if (!isStandalone && screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(()=>{});
   }
   if ('serviceWorker' in navigator) {
