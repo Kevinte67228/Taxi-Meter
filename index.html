@@ -16,7 +16,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body {
     height:100%; width:100%;
-    background:#111;
+    background:#c9973d;
     overflow:hidden;
     font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
     touch-action: manipulation;
@@ -475,6 +475,7 @@
     <div class="field">
       <label>營業區清單（每行一個，可自行增減）</label>
       <textarea id="zoneOptionsText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:5dvh; resize:vertical;"></textarea>
+      <div class="hint">這裡不限於實際行政區名稱，你可以自由填寫任何想要的描述文字，例如「小明的車」「約會專車」「上班接送」都可以，純粹好玩用途。</div>
     </div>
 
     <h3>跳表費率</h3>
@@ -1010,14 +1011,15 @@
 
   function fitLabelToButton(labelEl){
     const container = labelEl.parentElement;
-    let size = 4.6; // dvh，起始字級（跟其他按鈕上限相近）
-    const minSize = 1.6;
-    labelEl.style.fontSize = size + 'dvh';
+    // 先清空 inline 字級，讓它套用跟其他按鈕相同的 CSS 公式（含 --scale 縮放），
+    // 再從這個「跟兄弟按鈕一致」的基準開始，只有塞不下才逐步縮小
+    labelEl.style.fontSize = '';
     labelEl.style.whiteSpace = 'nowrap';
+    let sizePx = parseFloat(window.getComputedStyle(labelEl).fontSize) || 24;
     let guard = 0;
-    while (labelEl.scrollWidth > container.clientWidth - 4 && size > minSize && guard < 60) {
-      size -= 0.15;
-      labelEl.style.fontSize = size + 'dvh';
+    while (labelEl.scrollWidth > container.clientWidth - 4 && sizePx > 10 && guard < 100) {
+      sizePx -= 1;
+      labelEl.style.fontSize = sizePx + 'px';
       guard++;
     }
   }
