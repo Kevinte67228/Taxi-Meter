@@ -552,7 +552,7 @@
     <h3>按鍵音效</h3>
     <div class="checkbox-row">
       <input type="checkbox" id="sndEnabled" checked>
-      <label for="sndEnabled" style="margin:0;">啟用按鍵音效（預設為嗶聲）</label>
+      <label for="sndEnabled" style="margin:0;">啟用音效（按鍵與跳錶金額變化時都會有嗶聲）</label>
     </div>
     <div class="two-col">
       <div class="field">
@@ -1283,6 +1283,7 @@
   let elapsedTimerId = null;
   let gpsOk = false;
   let startedAt = null;
+  let lastDisplayedFare = null; // 用來偵測車資是否跳錶,以便播放音效
 
   function haversineKm(lat1, lon1, lat2, lon2){
     const R = 6371;
@@ -1331,6 +1332,13 @@
         renderLedger();
       }
     }
+    // 跳錶音效：只有金額比上一次顯示的「往上跳」才播放，
+    // 避免歸零、套用折扣讓金額變小時也跟著誤響
+    if (lastDisplayedFare !== null && meterFare > lastDisplayedFare) {
+      playBeep();
+    }
+    lastDisplayedFare = meterFare;
+
     document.getElementById('fare').textContent = meterFare;
     document.getElementById('toll').textContent = tollFee > 0 ? tollFee : '.';
     document.getElementById('km').textContent = totalDistanceKm.toFixed(1);
@@ -1406,6 +1414,7 @@
     friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null; friendLedgerBaseline = 0;
     friendDiscountMultiplier = 1; friendDiscountPressCount = 0;
     friendBadgeWrap.style.display = 'none';
+    lastDisplayedFare = null;
     document.getElementById('fare').textContent = '0';
     document.getElementById('toll').textContent = '.';
     document.getElementById('km').textContent = '.0';
