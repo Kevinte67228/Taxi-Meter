@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const CACHE_NAME = "zhaocai-meter-" + CACHE_VERSION;
 const STATIC_ASSETS = [
   "manifest.json",
@@ -27,9 +27,10 @@ self.addEventListener("fetch", (event) => {
   const isHTML = req.mode === "navigate" || req.destination === "document";
 
   if (isHTML) {
-    // 網路優先：確保每次部署更新都能立刻看到新畫面，離線時才退回快取
+    // 網路優先，且明確要求瀏覽器完全略過 HTTP 快取（不只是 SW 快取），
+    // 確保每次部署更新都能立刻看到新畫面，離線時才退回 SW 快取
     event.respondWith(
-      fetch(req)
+      fetch(req.url, { cache: "no-store" })
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
