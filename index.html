@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#c99a3e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>招財 計程計費器 HC-1</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body {
+    height:100%; width:100%;
+    background:#111;
+    overflow:hidden;
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    touch-action: manipulation;
+  }
+
+  .rotate-hint {
+    display:none;
+    position:fixed; inset:0;
+    background:#000; color:#e8c977;
+    z-index:999;
+    align-items:center; justify-content:center;
+    text-align:center; font-size:6vw; padding:6vw;
+  }
+  @media (orientation: portrait) {
+    .rotate-hint { display:flex; }
+    .meter { display:none; }
+  }
+
+  .meter {
+    width:100vw;
+    height:100dvh;
+    background: linear-gradient(180deg,#d8ae55 0%, #c9973d 45%, #b8862f 100%);
+    display:flex;
+    flex-direction:column;
+    padding: 0.8dvh 1.2vw;
+    position:relative;
+  }
+
+  .screen-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    background:#0a0a0a;
+    border-radius: 1.5dvh;
+    padding: 1dvh 1vw 0.8dvh;
+    display:flex;
+    flex-direction:column;
+    box-shadow: inset 0 0 6px rgba(0,0,0,.8);
+    position:relative;
+  }
+
+  .top-labels {
+    color:#eee;
+    display:flex;
+    align-items:center;
+    font-size: 3.4dvh;
+    font-weight:700;
+    letter-spacing: 0.3vw;
+    padding: 0 0.6vw 0.8dvh;
+    white-space:nowrap;
+    flex: 0 0 auto;
+  }
+  .top-labels span { margin-right: 3.5vw; }
+  .top-labels span:last-child { margin-right:0; }
+
+  .lcd {
+    flex:1 1 auto;
+    min-height:0;
+    background: radial-gradient(ellipse at 30% 20%, #8fef3a, #6bd41f 60%, #57bc16 100%);
+    border-radius: 0.8dvh;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding: 1.2dvh 1.4vw;
+    color:#144a06;
+    position:relative;
+    overflow:hidden;
+  }
+  .lcd::after {
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 3px);
+    pointer-events:none;
+  }
+
+  .lcd-row1 {
+    display:flex;
+    align-items:center;
+    font-weight:700;
+    border-bottom: 3px solid rgba(20,74,6,0.35);
+    padding-bottom: 1.2dvh;
+    flex: 0 0 auto;
+  }
+  .cell {
+    border-right: 3px solid rgba(20,74,6,0.35);
+    padding: 0 1.4vw;
+    display:flex;
+    align-items:center;
+    height:8dvh;
+  }
+  .cell:last-child { border-right:none; }
+  .fee-amount { font-size:4.4dvh; min-width:9vw; justify-content:flex-end; }
+  .zone { font-size:4.4dvh; letter-spacing:0.2vw; }
+  .timer { font-size:4.4dvh; letter-spacing:0.4vw; flex:1; justify-content:center; }
+  .km { font-size:4.4dvh; justify-content:flex-end; min-width:8vw; }
+
+  .lcd-row2 {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex: 0 0 auto;
+    padding-top: 1dvh;
+  }
+  .clock {
+    font-size:5.6dvh;
+    font-weight:800;
+    letter-spacing:0.1vw;
+  }
+  .wifi-icon { font-size:4vh; margin: 0 1.2vw; opacity:0.85; }
+  .fare-label { font-size:4dvh; font-weight:700; margin-right:1.2vw; }
+  .fare-value {
+    font-size: 9dvh;
+    font-weight:900;
+    line-height:1;
+  }
+  .fare-unit { font-size:4dvh; font-weight:700; margin-left:0.4vw; }
+  .fare-wrap { display:flex; align-items:baseline; margin-left:auto; }
+
+  .brand {
+    position:absolute;
+    right: 1.4vw; top: 1.4dvh;
+    color:#111;
+    text-align:center;
+    font-size: 3dvh;
+    font-weight:900;
+    writing-mode: vertical-rl;
+    letter-spacing:0.3dvh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .brand .model {
+    writing-mode: horizontal-tb;
+    font-size:2dvh;
+    margin-top:0.6dvh;
+    font-weight:700;
+  }
+
+  .buttons {
+    flex: 0 0 auto;
+    display:flex;
+    gap: 1vw;
+    margin-top: 1dvh;
+    padding: 0 0.3vw;
+    height: 12dvh;
+  }
+  .btn {
+    flex:1;
+    background: linear-gradient(180deg,#1c1c1c,#0c0c0c);
+    border-radius: 1dvh;
+    border: 1px solid #000;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#e6e6e6;
+    font-size: 2.6dvh;
+    font-weight:700;
+    letter-spacing:0.1vw;
+    line-height:1.25;
+    position:relative;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 2px rgba(0,0,0,0.4);
+    user-select:none;
+    cursor:pointer;
+    text-align:center;
+    padding: 0.6dvh 0.4vw;
+    overflow:visible;
+  }
+  .btn .indicator {
+    width: 4.5vw;
+    height: 0.8dvh;
+    border-radius: 2px;
+    background:#3a1010;
+    margin-bottom: 1dvh;
+    flex: 0 0 auto;
+  }
+  .btn.active .indicator { background:#ff2b1f; box-shadow: 0 0 10px 2px rgba(255,40,20,0.9); }
+  .btn.active { color:#fff; }
+  .btn:active { transform: translateY(1px); }
+  .btn span.label { white-space:nowrap; }
+
+  .serial {
+    position:absolute;
+    left: -1.6vw; top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    font-size: 1.8dvh;
+    color:#2a2a2a;
+    letter-spacing:0.2dvh;
+  }
+</style>
+</head>
+<body>
+
+<div class="rotate-hint">請將手機轉為橫向 📱↺<br>Please rotate your phone to landscape</div>
+
+<div class="meter">
+  <span class="serial">04490</span>
+
+  <div class="screen-frame">
+    <div class="brand">招財<span class="model">HC-1</span></div>
+
+    <div class="top-labels">
+      <span>通行費　元</span>
+      <span>營業區</span>
+      <span>　時　分　秒</span>
+      <span>公里</span>
+    </div>
+
+    <div class="lcd">
+      <div class="lcd-row1">
+        <div class="cell fee-amount" id="toll">.</div>
+        <div class="cell zone" id="zone">新北市</div>
+        <div class="cell timer" id="timerField">：：0</div>
+        <div class="cell km" id="km">.0</div>
+      </div>
+      <div class="lcd-row2">
+        <div style="display:flex; align-items:center;">
+          <span class="clock" id="clock">14:13:25</span>
+          <span class="wifi-icon">📶</span>
+        </div>
+        <div class="fare-wrap">
+          <span class="fare-label">車資</span>
+          <span class="fare-value" id="fare">70</span>
+          <span class="fare-unit">元</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <div class="btn" id="btn-empty"><div class="indicator"></div><span class="label">空</span></div>
+    <div class="btn active" id="btn-run"><div class="indicator"></div><span class="label">計程計時</span></div>
+    <div class="btn" id="btn-stop"><div class="indicator"></div><span class="label">停</span></div>
+    <div class="btn" id="btn-print"><div class="indicator"></div><span class="label">列印</span></div>
+    <div class="btn" id="btn-highway"><div class="indicator"></div><span class="label">高速公路</span></div>
+  </div>
+</div>
+
+<script>
+  function pad(n){ return n.toString().padStart(2,'0'); }
+  function tick(){
+    const d = new Date();
+    document.getElementById('clock').textContent =
+      pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  const buttons = document.querySelectorAll('.btn');
+  buttons.forEach(b => {
+    b.addEventListener('click', () => {
+      buttons.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(()=>{});
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+</script>
+</body>
+</html>
