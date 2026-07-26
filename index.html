@@ -480,6 +480,49 @@
       <input type="number" id="cfgHighwayToll" step="5" value="40">
     </div>
 
+    <h3>按鍵音效</h3>
+    <div class="checkbox-row">
+      <input type="checkbox" id="sndEnabled" checked>
+      <label for="sndEnabled" style="margin:0;">啟用按鍵音效（預設為嗶聲）</label>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>音調（Hz）</label>
+        <input type="range" id="sndFreq" min="200" max="2000" step="10" value="880">
+        <div class="hint" id="sndFreqReadout">880 Hz</div>
+      </div>
+      <div class="field">
+        <label>音效長度（毫秒）</label>
+        <input type="range" id="sndDuration" min="20" max="300" step="10" value="80">
+        <div class="hint" id="sndDurationReadout">80 ms</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>音量</label>
+        <input type="range" id="sndVolume" min="0" max="100" step="5" value="50">
+        <div class="hint" id="sndVolumeReadout">50%</div>
+      </div>
+      <div class="field">
+        <label>音色</label>
+        <select id="sndWaveform" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:6dvh;">
+          <option value="sine">正弦波（柔和嗶聲）</option>
+          <option value="square">方波（電子感）</option>
+          <option value="triangle">三角波</option>
+          <option value="sawtooth">鋸齒波（較尖銳）</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>自訂音效檔（可選，上傳後會取代預設嗶聲）</label>
+      <input type="file" id="sndFileInput" accept="audio/*" style="width:100%; color:#ccc; font-size:4dvh;">
+      <div class="hint" id="sndCustomStatus">目前使用預設嗶聲</div>
+    </div>
+    <div class="panel-actions">
+      <button class="btn-reset" id="sndTestBtn">測試音效</button>
+      <button class="btn-reset" id="sndClearCustomBtn">清除自訂音效</button>
+    </div>
+
     <div class="panel-actions">
       <button class="btn-reset" id="resetBtn">恢復預設</button>
       <button class="btn-save" id="saveBtn">儲存並套用</button>
@@ -648,7 +691,127 @@
       if (saved) config = { ...DEFAULT_CONFIG, ...saved };
     } catch(e) {}
     configToForm(config);
+
+    loadSoundSettings();
   }
+
+  /* ================= 按鍵音效 ================= */
+  const DEFAULT_SOUND = {
+    enabled: true, freq: 880, duration: 80, volume: 0.5, waveform: 'sine', customSound: null
+  };
+  let soundConfig = { ...DEFAULT_SOUND };
+  let pendingCustomSound = undefined; // undefined = 未變動, null = 使用者按了清除
+
+  const sndEls = {
+    enabled: document.getElementById('sndEnabled'),
+    freq: document.getElementById('sndFreq'),
+    freqReadout: document.getElementById('sndFreqReadout'),
+    duration: document.getElementById('sndDuration'),
+    durationReadout: document.getElementById('sndDurationReadout'),
+    volume: document.getElementById('sndVolume'),
+    volumeReadout: document.getElementById('sndVolumeReadout'),
+    waveform: document.getElementById('sndWaveform'),
+    fileInput: document.getElementById('sndFileInput'),
+    customStatus: document.getElementById('sndCustomStatus'),
+    testBtn: document.getElementById('sndTestBtn'),
+    clearCustomBtn: document.getElementById('sndClearCustomBtn'),
+  };
+
+  function soundFormToConfig(){
+    return {
+      enabled: sndEls.enabled.checked,
+      freq: parseFloat(sndEls.freq.value) || 880,
+      duration: parseFloat(sndEls.duration.value) || 80,
+      volume: (parseFloat(sndEls.volume.value) || 0) / 100,
+      waveform: sndEls.waveform.value,
+      customSound: pendingCustomSound !== undefined ? pendingCustomSound : soundConfig.customSound,
+    };
+  }
+
+  function refreshSoundReadouts(){
+    sndEls.freqReadout.textContent = sndEls.freq.value + ' Hz';
+    sndEls.durationReadout.textContent = sndEls.duration.value + ' ms';
+    sndEls.volumeReadout.textContent = sndEls.volume.value + '%';
+  }
+
+  function soundConfigToForm(c){
+    sndEls.enabled.checked = c.enabled;
+    sndEls.freq.value = c.freq;
+    sndEls.duration.value = c.duration;
+    sndEls.volume.value = Math.round(c.volume * 100);
+    sndEls.waveform.value = c.waveform;
+    sndEls.customStatus.textContent = c.customSound ? '目前使用自訂音效檔' : '目前使用預設嗶聲';
+    refreshSoundReadouts();
+  }
+
+  function loadSoundSettings(){
+    try {
+      const saved = JSON.parse(localStorage.getItem('meterSoundConfig'));
+      if (saved) soundConfig = { ...DEFAULT_SOUND, ...saved };
+    } catch(e) {}
+    pendingCustomSound = undefined;
+    soundConfigToForm(soundConfig);
+  }
+
+  let audioCtx = null;
+  function playBeep(){
+    const c = soundConfig;
+    if (!c.enabled) return;
+    if (c.customSound) {
+      try {
+        const audio = new Audio(c.customSound);
+        audio.volume = c.volume;
+        audio.play().catch(() => {});
+      } catch(e) {}
+      return;
+    }
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = c.waveform;
+      osc.frequency.value = c.freq;
+      gain.gain.value = c.volume;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      const durSec = c.duration / 1000;
+      gain.gain.setValueAtTime(c.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + durSec);
+      osc.start(now);
+      osc.stop(now + durSec + 0.02);
+    } catch(e) {}
+  }
+
+  sndEls.freq.addEventListener('input', refreshSoundReadouts);
+  sndEls.duration.addEventListener('input', refreshSoundReadouts);
+  sndEls.volume.addEventListener('input', refreshSoundReadouts);
+
+  sndEls.testBtn.addEventListener('click', () => {
+    const preview = soundFormToConfig();
+    const original = soundConfig;
+    soundConfig = preview;
+    playBeep();
+    soundConfig = original;
+  });
+
+  sndEls.fileInput.addEventListener('change', () => {
+    const file = sndEls.fileInput.files && sndEls.fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingCustomSound = reader.result;
+      sndEls.customStatus.textContent = '已選擇：' + file.name + '（記得按下方「儲存並套用」）';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  sndEls.clearCustomBtn.addEventListener('click', () => {
+    pendingCustomSound = null;
+    sndEls.fileInput.value = '';
+    sndEls.customStatus.textContent = '目前使用預設嗶聲（記得按下方「儲存並套用」）';
+  });
 
   settingsBtn.addEventListener('click', () => { overlay.classList.add('open'); });
   closeBtn.addEventListener('click', () => { overlay.classList.remove('open'); });
@@ -659,6 +822,17 @@
     localStorage.setItem('meterManualScale', manualSlider.value);
     config = formToConfig();
     localStorage.setItem('meterFareConfig', JSON.stringify(config));
+
+    soundConfig = soundFormToConfig();
+    try {
+      localStorage.setItem('meterSoundConfig', JSON.stringify(soundConfig));
+    } catch(e) {
+      alert('自訂音效檔太大，無法儲存，請改用較小的音檔或改用預設嗶聲。');
+      soundConfig.customSound = null;
+      soundConfigToForm(soundConfig);
+    }
+    pendingCustomSound = undefined;
+
     overlay.classList.remove('open');
     updateFareDisplay();
   });
@@ -667,11 +841,16 @@
     localStorage.removeItem('meterDiagonal');
     localStorage.removeItem('meterManualScale');
     localStorage.removeItem('meterFareConfig');
+    localStorage.removeItem('meterSoundConfig');
     diagInput.value = BASE_DIAGONAL;
     manualSlider.value = 1;
     config = { ...DEFAULT_CONFIG };
     configToForm(config);
     refreshScalePreview();
+    soundConfig = { ...DEFAULT_SOUND };
+    pendingCustomSound = undefined;
+    sndEls.fileInput.value = '';
+    soundConfigToForm(soundConfig);
     updateFareDisplay();
   });
 
@@ -812,14 +991,17 @@
   }
 
   document.getElementById('btn-empty').addEventListener('click', () => {
+    playBeep();
     resetMeter();
     setActiveStateButton('btn-empty');
   });
   document.getElementById('btn-run').addEventListener('click', () => {
+    playBeep();
     startMeter();
     setActiveStateButton('btn-run');
   });
   document.getElementById('btn-stop').addEventListener('click', () => {
+    playBeep();
     stopMeter();
     setActiveStateButton('btn-stop');
   });
@@ -830,6 +1012,7 @@
   }
 
   document.getElementById('btn-highway').addEventListener('click', (e) => {
+    playBeep();
     tollFee += config.highwayToll;
     updateFareDisplay();
     pulseButton(e.currentTarget);
@@ -837,6 +1020,7 @@
 
   const receiptOverlay = document.getElementById('receiptOverlay');
   document.getElementById('btn-print').addEventListener('click', (e) => {
+    playBeep();
     pulseButton(e.currentTarget);
     const meterFare = computeMeterFare();
     document.getElementById('rcTime').textContent = new Date().toLocaleString('zh-TW', { hour12:false });
