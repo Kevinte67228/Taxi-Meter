@@ -368,6 +368,11 @@
 
 <div class="rotate-hint">請將手機轉為橫向 📱↺<br>Please rotate your phone to landscape</div>
 
+<div id="updateBanner" style="display:none; position:fixed; left:0; right:0; top:0; z-index:250; align-items:center; justify-content:center; gap:2vw; background:#0a5c1e; color:#eafce0; padding:1.4dvh 3vw; font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif; font-size:2.6dvh; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+  <span>🔄</span>
+  <span class="update-banner-text">發現新版本，點此更新</span>
+</div>
+
 <div class="meter">
   <span class="serial">04490</span>
 
@@ -698,8 +703,42 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
-        .then(reg => reg.update().catch(()=>{}))
-        .catch(()=>{});
+        .then(reg => {
+          function showUpdateBanner(worker) {
+            const banner = document.getElementById('updateBanner');
+            if (!banner) return;
+            banner.style.display = 'flex';
+            banner.onclick = () => {
+              banner.querySelector('.update-banner-text').textContent = '更新中…';
+              worker.postMessage('SKIP_WAITING');
+            };
+          }
+          // 情境一：頁面打開的當下，已經有一個新版本在待命中
+          if (reg.waiting && navigator.serviceWorker.controller) {
+            showUpdateBanner(reg.waiting);
+          }
+          // 情境二：頁面開著的期間，偵測到新版本開始安裝
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateBanner(newWorker);
+              }
+            });
+          });
+          reg.update().catch(() => {});
+        })
+        .catch(() => {});
+
+      // 使用者點了更新提示條之後，新版 Service Worker 接管畫面的當下，自動重新整理一次，
+      // 讓使用者感覺就是「點一下、App 自己重開變新版」，不用手動解除安裝重裝
+      let swRefreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (swRefreshing) return;
+        swRefreshing = true;
+        window.location.reload();
+      });
     });
   }
 
