@@ -295,7 +295,7 @@
     border-radius: 1dvh;
     padding: 1.4dvh 1.8vw;
     font-family: "Courier New", monospace;
-    font-size: 5dvh;
+    font-size: 6dvh;
     cursor:pointer;
   }
   .presets button.selected { background:#6bd41f; color:#0a2000; border-color:#6bd41f; font-weight:700; }
@@ -317,10 +317,10 @@
   .btn-save { background:#6bd41f; color:#0a2000; }
   .btn-reset { background:#3a3a3a; color:#ddd; }
   .btn-close { background:#3a3a3a; color:#ddd; }
-  .hint { font-family: "Courier New", monospace; font-size:4dvh; color:#999; margin-top:0.6dvh; line-height:1.5; }
+  .hint { font-family: "Courier New", monospace; font-size:6dvh; color:#999; margin-top:0.6dvh; line-height:1.5; }
   .disclaimer {
     background:#2a2410; border:1px solid #6b5b1f; color:#f0d477;
-    border-radius:0.8dvh; padding:1.4dvh; font-family: "Courier New", monospace; font-size:4.5dvh; line-height:1.6; margin-bottom:1.8dvh;
+    border-radius:0.8dvh; padding:1.4dvh; font-family: "Courier New", monospace; font-size:6dvh; line-height:1.6; margin-bottom:1.8dvh;
   }
   .checkbox-row { display:flex; align-items:center; gap:1vw; margin-bottom:1.2dvh; }
   .checkbox-row input { width:6dvh; height:6dvh; }
@@ -334,9 +334,9 @@
   .ledger-row .ledger-amount { color:#9fe870; font-weight:900; white-space:nowrap; }
   .ledger-row button {
     background:#3a3a3a; color:#ddd; border:none; border-radius:0.6dvh;
-    padding: 0.8dvh 1.4vw; font-family:"Courier New",monospace; font-size:4.5dvh; cursor:pointer; flex:0 0 auto;
+    padding: 0.8dvh 1.4vw; font-family:"Courier New",monospace; font-size:6dvh; cursor:pointer; flex:0 0 auto;
   }
-  .ledger-empty { color:#777; font-size:4.5dvh; padding: 1dvh 0; }
+  .ledger-empty { color:#777; font-family:"Courier New",monospace; font-size:6dvh; padding: 1dvh 0; }
 
   .friend-pick-btn {
     display:block; width:100%; text-align:left;
@@ -395,7 +395,7 @@
           <span class="clock" id="clock">14:13:25</span>
           <span class="wifi-icon">📶</span>
           <span class="gps-icon" id="gpsIcon">○</span>
-          <span id="friendBadge" style="display:none; font-size: calc(2.4dvh * var(--scale)); margin-left:1vw; color:#0a5c1e; font-weight:700;"></span>
+          <span id="friendBadge" style="display:none; align-items:center; font-size: calc(3.6dvh * var(--scale)); margin-left:1.4vw; color:#0a5c1e; font-weight:900; text-align:left; white-space:nowrap;"></span>
         </div>
         <div class="fare-wrap">
           <span class="fare-label">車資</span>
@@ -420,7 +420,7 @@
 <div class="overlay" id="friendPickerOverlay">
   <div class="panel">
     <h2 id="friendPickerTitle">選擇親友</h2>
-    <div class="hint" style="margin-bottom:1.4dvh;">建議按下「停」結束行程後再套用折扣，記帳金額才會是完整車資的折扣後金額。</div>
+    <div class="hint" style="margin-bottom:1.4dvh;">套用後，費用會繼續套用折扣的方式累進計算——行程若還沒結束，車資會邊跳錶邊自動打折，記帳金額也會跟著即時更新，直到你按「停」或「空」為止。</div>
     <div id="friendPickerList"></div>
     <div class="panel-actions" style="margin-top:1.4dvh;">
       <button class="btn-close" id="friendPickerCancelBtn">取消</button>
@@ -474,7 +474,7 @@
     </div>
     <div class="field">
       <label>營業區清單（每行一個，可自行增減）</label>
-      <textarea id="zoneOptionsText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:5dvh; resize:vertical;"></textarea>
+      <textarea id="zoneOptionsText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:6dvh; resize:vertical;"></textarea>
       <div class="hint">這裡不限於實際行政區名稱，你可以自由填寫任何想要的描述文字，例如「小明的車」「約會專車」「上班接送」都可以，純粹好玩用途。</div>
     </div>
 
@@ -572,7 +572,7 @@
     </div>
     <div class="field">
       <label>自訂音效檔（可選，上傳後會取代預設嗶聲）</label>
-      <input type="file" id="sndFileInput" accept="audio/*" style="width:100%; color:#ccc; font-size:4dvh;">
+      <input type="file" id="sndFileInput" accept="audio/*" style="width:100%; color:#ccc; font-family:'Courier New',monospace; font-size:6dvh;">
       <div class="hint" id="sndCustomStatus">目前使用預設嗶聲</div>
     </div>
     <div class="panel-actions">
@@ -603,7 +603,7 @@
     </div>
     <div class="field">
       <label>親友名單（每行一位，套用折扣時會列出來選）</label>
-      <textarea id="friendListText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:5dvh; resize:vertical;"></textarea>
+      <textarea id="friendListText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:6dvh; resize:vertical;"></textarea>
     </div>
 
     <h3>親友月結明細</h3>
@@ -978,6 +978,7 @@
   let friendDiscountUsedThisTrip = false;
   let friendDiscountActive = false;
   let currentFriendName = null;
+  let friendLedgerBaseline = 0;
 
   const friendEls = {
     enabled: document.getElementById('friendEnabled'),
@@ -1099,15 +1100,11 @@
 
   function applyFriendDiscount(name){
     playBeep();
-    const rawFare = computeMeterFare();
-    const discounted = Math.round(rawFare * friendConfig.discountRatio / 10);
     friendDiscountActive = true;
     friendDiscountUsedThisTrip = true;
     currentFriendName = name;
-    ledger[name] = (ledger[name] || 0) + discounted;
-    saveLedger();
-    renderLedger();
-    friendBadge.style.display = 'inline';
+    friendLedgerBaseline = ledger[name] || 0;
+    friendBadge.style.display = 'inline-flex';
     friendBadge.textContent = '👥 ' + name + ' 折扣中（' + friendConfig.discountRatio + '折）';
     friendPickerOverlay.classList.remove('open');
     updateFareDisplay();
@@ -1261,6 +1258,11 @@
     let meterFare = computeMeterFare();
     if (friendDiscountActive) {
       meterFare = Math.round(meterFare * friendConfig.discountRatio / 10);
+      if (currentFriendName) {
+        ledger[currentFriendName] = friendLedgerBaseline + meterFare;
+        saveLedger();
+        renderLedger();
+      }
     }
     document.getElementById('fare').textContent = meterFare;
     document.getElementById('toll').textContent = tollFee > 0 ? tollFee : '.';
@@ -1334,7 +1336,7 @@
     if (elapsedTimerId) { clearInterval(elapsedTimerId); elapsedTimerId = null; }
     totalDistanceKm = 0; lowSpeedSeconds = 0; elapsedSeconds = 0; tollFee = 0;
     lastPos = null; gpsOk = false; startedAt = null;
-    friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null;
+    friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null; friendLedgerBaseline = 0;
     friendBadge.style.display = 'none';
     document.getElementById('fare').textContent = '0';
     document.getElementById('toll').textContent = '.';
