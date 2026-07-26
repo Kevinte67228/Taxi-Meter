@@ -390,12 +390,14 @@
         <div class="cell timer" id="timerField">：：0</div>
         <div class="cell km" id="km">.0</div>
       </div>
+      <div id="friendBadgeWrap" style="display:none; flex:1; align-items:center; justify-content:center;">
+        <span id="friendBadge" style="font-size: calc(4.6dvh * var(--scale)); color:#0a5c1e; font-weight:900; text-align:center; white-space:nowrap;"></span>
+      </div>
       <div class="lcd-row2">
         <div style="display:flex; align-items:center;">
           <span class="clock" id="clock">14:13:25</span>
           <span class="wifi-icon">📶</span>
           <span class="gps-icon" id="gpsIcon">○</span>
-          <span id="friendBadge" style="display:none; align-items:center; font-size: calc(3.6dvh * var(--scale)); margin-left:1.4vw; color:#0a5c1e; font-weight:900; text-align:left; white-space:nowrap;"></span>
         </div>
         <div class="fare-wrap">
           <span class="fare-label">車資</span>
@@ -995,6 +997,7 @@
   const btnFriend = document.getElementById('btn-friend');
   const friendBtnLabel = document.getElementById('friendBtnLabel');
   const friendBadge = document.getElementById('friendBadge');
+  const friendBadgeWrap = document.getElementById('friendBadgeWrap');
   const friendPickerOverlay = document.getElementById('friendPickerOverlay');
   const friendPickerList = document.getElementById('friendPickerList');
   const friendLedgerContainer = document.getElementById('friendLedgerContainer');
@@ -1109,7 +1112,7 @@
     friendDiscountUsedThisTrip = true;
     currentFriendName = name;
     friendLedgerBaseline = ledger[name] || 0;
-    friendBadge.style.display = 'inline-flex';
+    friendBadgeWrap.style.display = 'flex';
     friendBadge.textContent = '👥 ' + name + ' 折扣中（' + friendConfig.discountRatio + '折）';
     friendPickerOverlay.classList.remove('open');
     updateFareDisplay();
@@ -1342,7 +1345,7 @@
     totalDistanceKm = 0; lowSpeedSeconds = 0; elapsedSeconds = 0; tollFee = 0;
     lastPos = null; gpsOk = false; startedAt = null;
     friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null; friendLedgerBaseline = 0;
-    friendBadge.style.display = 'none';
+    friendBadgeWrap.style.display = 'none';
     document.getElementById('fare').textContent = '0';
     document.getElementById('toll').textContent = '.';
     document.getElementById('km').textContent = '.0';
