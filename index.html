@@ -46,19 +46,21 @@
   }
 
   .top-bar-icons {
-    position:absolute;
-    top: 1dvh; right: 6vw;
-    z-index: 30;
+    flex: 0 0 auto;
     display:flex;
+    justify-content:flex-end;
+    align-items:center;
     gap: 1.2vw;
+    height: 8dvh;
+    padding: 0 0.6vw 0.8dvh;
   }
   .icon-btn {
-    width: 8dvh; height: 8dvh;
+    width: 6.6dvh; height: 6.6dvh;
     border-radius: 50%;
     background: #0a0a0a;
     border: 3px solid #f3d27a;
     color:#f3d27a;
-    font-size: 4.2dvh;
+    font-size: 3.4dvh;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     user-select:none;
@@ -258,21 +260,21 @@
   .field input[type="number"] {
     flex:1;
     background:#0d0d0d;
-    border:1px solid #444;
-    border-radius: 0.6dvh;
+    border:2px solid #444;
+    border-radius: 1dvh;
     color:#fff;
-    padding: 1dvh 1vw;
+    padding: 1.6dvh 1.4vw;
     font-size: 9.5dvh;
   }
   .two-col { display:flex; gap: 2vw; }
   .two-col .field { flex:1; }
-  .presets { display:flex; flex-wrap:wrap; gap: 0.8vw; margin-top: 1dvh; }
+  .presets { display:flex; flex-wrap:wrap; gap: 1vw; margin-top: 1dvh; }
   .presets button {
     background:#2a2a2a;
-    border:1px solid #4a4a4a;
+    border:2px solid #4a4a4a;
     color:#ddd;
-    border-radius: 0.6dvh;
-    padding: 0.8dvh 1.4vw;
+    border-radius: 1dvh;
+    padding: 1.4dvh 1.8vw;
     font-size: 8dvh;
     cursor:pointer;
   }
@@ -306,13 +308,13 @@
     font-family: "Courier New", monospace;
     background:#fff; color:#111;
     border-radius:0.6dvh;
-    padding: 2dvh 3vw;
+    padding: 3dvh 3vw;
     line-height:1.9;
-    font-size: 2dvh;
+    font-size: 6dvh;
   }
-  .receipt hr { border:none; border-top:1px dashed #999; margin:1dvh 0; }
-  .receipt .rowline { display:flex; justify-content:space-between; }
-  .receipt .total { font-weight:900; font-size:2.6dvh; }
+  .receipt hr { border:none; border-top:2px dashed #999; margin:1.4dvh 0; }
+  .receipt .rowline { display:flex; justify-content:space-between; gap:2vw; flex-wrap:wrap; }
+  .receipt .total { font-weight:900; font-size:7.5dvh; }
 </style>
 </head>
 <body>
@@ -469,10 +471,10 @@
 
 <!-- Receipt overlay -->
 <div class="overlay" id="receiptOverlay">
-  <div class="panel" style="padding:0; background:transparent; border:none;">
+  <div class="panel" style="padding:0; background:transparent; border:none; width:min(760px,98vw);">
     <div class="receipt" id="receiptContent">
-      <div style="text-align:center; font-weight:900; font-size:2.4dvh;">招財衛星車隊</div>
-      <div style="text-align:center;">計程車費證明</div>
+      <div style="text-align:center; font-weight:900; font-size:7dvh;">招財衛星車隊</div>
+      <div style="text-align:center; font-size:4.5dvh;">計程車費證明</div>
       <hr>
       <div class="rowline"><span>日期時間</span><span id="rcTime">--</span></div>
       <div class="rowline"><span>營業區</span><span>新北市</span></div>
