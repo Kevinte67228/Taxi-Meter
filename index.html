@@ -11,6 +11,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>招財 計程計費器 HC-1</title>
 <style>
+  :root { --scale: 1.3; }
+
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body {
     height:100%; width:100%;
@@ -59,7 +61,7 @@
     color:#eee;
     display:flex;
     align-items:center;
-    font-size: 3.4dvh;
+    font-size: calc(3.4dvh * var(--scale));
     font-weight:700;
     letter-spacing: 0.3vw;
     padding: 0 0.6vw 0.8dvh;
@@ -102,13 +104,13 @@
     padding: 0 1.4vw;
     display:flex;
     align-items:center;
-    height:8dvh;
+    height: calc(8dvh * var(--scale));
   }
   .cell:last-child { border-right:none; }
-  .fee-amount { font-size:4.4dvh; min-width:9vw; justify-content:flex-end; }
-  .zone { font-size:4.4dvh; letter-spacing:0.2vw; }
-  .timer { font-size:4.4dvh; letter-spacing:0.4vw; flex:1; justify-content:center; }
-  .km { font-size:4.4dvh; justify-content:flex-end; min-width:8vw; }
+  .fee-amount { font-size: calc(4.4dvh * var(--scale)); min-width:9vw; justify-content:flex-end; }
+  .zone { font-size: calc(4.4dvh * var(--scale)); letter-spacing:0.2vw; }
+  .timer { font-size: calc(4.4dvh * var(--scale)); letter-spacing:0.4vw; flex:1; justify-content:center; }
+  .km { font-size: calc(4.4dvh * var(--scale)); justify-content:flex-end; min-width:8vw; }
 
   .lcd-row2 {
     display:flex;
@@ -118,18 +120,18 @@
     padding-top: 1dvh;
   }
   .clock {
-    font-size:5.6dvh;
+    font-size: calc(5.6dvh * var(--scale));
     font-weight:800;
     letter-spacing:0.1vw;
   }
-  .wifi-icon { font-size:4vh; margin: 0 1.2vw; opacity:0.85; }
-  .fare-label { font-size:4dvh; font-weight:700; margin-right:1.2vw; }
+  .wifi-icon { font-size: calc(4dvh * var(--scale)); margin: 0 1.2vw; opacity:0.85; }
+  .fare-label { font-size: calc(4dvh * var(--scale)); font-weight:700; margin-right:1.2vw; }
   .fare-value {
-    font-size: 9dvh;
+    font-size: calc(9dvh * var(--scale));
     font-weight:900;
     line-height:1;
   }
-  .fare-unit { font-size:4dvh; font-weight:700; margin-left:0.4vw; }
+  .fare-unit { font-size: calc(4dvh * var(--scale)); font-weight:700; margin-left:0.4vw; }
   .fare-wrap { display:flex; align-items:baseline; margin-left:auto; }
 
   .brand {
@@ -152,6 +154,22 @@
     font-weight:700;
   }
 
+  .settings-btn {
+    position:absolute;
+    left: 0.8vw; top: 0.8dvh;
+    width: 4dvh; height: 4dvh;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color:#ccc;
+    font-size: 2.2dvh;
+    display:flex; align-items:center; justify-content:center;
+    z-index:20;
+    cursor:pointer;
+    user-select:none;
+  }
+  .settings-btn:active { background: rgba(255,255,255,0.18); }
+
   .buttons {
     flex: 0 0 auto;
     display:flex;
@@ -170,7 +188,7 @@
     align-items:center;
     justify-content:center;
     color:#e6e6e6;
-    font-size: 2.6dvh;
+    font-size: calc(2.6dvh * min(var(--scale), 1.25));
     font-weight:700;
     letter-spacing:0.1vw;
     line-height:1.25;
@@ -203,6 +221,80 @@
     color:#2a2a2a;
     letter-spacing:0.2dvh;
   }
+
+  /* ---------- Settings overlay ---------- */
+  .overlay {
+    display:none;
+    position:fixed; inset:0;
+    background: rgba(0,0,0,0.72);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding: 3vh 3vw;
+  }
+  .overlay.open { display:flex; }
+  .panel {
+    background: #1b1b1b;
+    border: 1px solid #3a3a3a;
+    border-radius: 1.4dvh;
+    width: min(560px, 92vw);
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding: 2.2dvh 3vw;
+    color: #eee;
+    font-size: 1.9dvh;
+  }
+  .panel h2 {
+    font-size: 2.6dvh;
+    margin-bottom: 1.6dvh;
+    color:#f3d27a;
+  }
+  .field { margin-bottom: 2dvh; }
+  .field label {
+    display:block;
+    font-size: 1.9dvh;
+    margin-bottom: 0.8dvh;
+    color:#cfcfcf;
+  }
+  .field .row { display:flex; align-items:center; gap: 1.2vw; }
+  .field input[type="number"] {
+    flex:1;
+    background:#0d0d0d;
+    border:1px solid #444;
+    border-radius: 0.6dvh;
+    color:#fff;
+    padding: 1dvh 1vw;
+    font-size: 2dvh;
+  }
+  .presets { display:flex; flex-wrap:wrap; gap: 0.8vw; margin-top: 1dvh; }
+  .presets button {
+    background:#2a2a2a;
+    border:1px solid #4a4a4a;
+    color:#ddd;
+    border-radius: 0.6dvh;
+    padding: 0.8dvh 1.4vw;
+    font-size: 1.7dvh;
+    cursor:pointer;
+  }
+  .presets button.selected { background:#6bd41f; color:#0a2000; border-color:#6bd41f; font-weight:700; }
+  input[type="range"] { width:100%; accent-color:#6bd41f; }
+  .scale-readout { text-align:center; font-size:2dvh; color:#f3d27a; margin-top:0.6dvh; font-weight:700; }
+  .panel-actions {
+    display:flex; gap: 1.2vw; margin-top: 2.2dvh;
+  }
+  .panel-actions button {
+    flex:1;
+    padding: 1.4dvh 0;
+    border-radius: 0.8dvh;
+    font-size: 2dvh;
+    font-weight:700;
+    border:none;
+    cursor:pointer;
+  }
+  .btn-save { background:#6bd41f; color:#0a2000; }
+  .btn-reset { background:#3a3a3a; color:#ddd; }
+  .btn-close { background:#3a3a3a; color:#ddd; }
+  .hint { font-size:1.6dvh; color:#999; margin-top:0.6dvh; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -213,6 +305,7 @@
   <span class="serial">04490</span>
 
   <div class="screen-frame">
+    <div class="settings-btn" id="settingsBtn">⚙</div>
     <div class="brand">招財<span class="model">HC-1</span></div>
 
     <div class="top-labels">
@@ -252,6 +345,45 @@
   </div>
 </div>
 
+<!-- Settings overlay -->
+<div class="overlay" id="overlay">
+  <div class="panel">
+    <h2>螢幕與字體設定</h2>
+
+    <div class="field">
+      <label>你的手機螢幕尺寸（吋，對角線）</label>
+      <div class="row">
+        <input type="number" id="diagInput" step="0.01" min="4" max="9" value="6.1">
+        <span>吋</span>
+      </div>
+      <div class="presets" id="presets">
+        <button data-v="6.1">6.1"</button>
+        <button data-v="6.3">6.3"</button>
+        <button data-v="6.5">6.5"</button>
+        <button data-v="6.7">6.7"</button>
+        <button data-v="6.83">6.83" (Redmi Note 15 Pro)</button>
+        <button data-v="6.9">6.9"</button>
+        <button data-v="7.6">7.6" (摺疊/平板)</button>
+      </div>
+      <div class="hint">螢幕越大，系統會建議把字級放大越多，畫面才不會顯得字太小、空間太空。</div>
+    </div>
+
+    <div class="field">
+      <label>手動微調（不滿意自動建議值時，自行拉動）</label>
+      <input type="range" id="manualSlider" min="0.7" max="1.6" step="0.01" value="1">
+      <div class="scale-readout" id="scaleReadout">目前縮放：130%</div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn-reset" id="resetBtn">恢復預設</button>
+      <button class="btn-save" id="saveBtn">儲存並套用</button>
+    </div>
+    <div class="panel-actions" style="margin-top:1dvh;">
+      <button class="btn-close" id="closeBtn">關閉</button>
+    </div>
+  </div>
+</div>
+
 <script>
   function pad(n){ return n.toString().padStart(2,'0'); }
   function tick(){
@@ -279,6 +411,86 @@
       navigator.serviceWorker.register('sw.js').catch(()=>{});
     });
   }
+
+  // ---------- Screen-size based font scaling ----------
+  const BASE_DIAGONAL = 6.1; // 設計基準：以 6.1 吋為 1.0 倍的參考點
+  const MIN_SCALE = 0.85;
+  const MAX_SCALE = 2.0;
+
+  const overlay = document.getElementById('overlay');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const closeBtn = document.getElementById('closeBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const diagInput = document.getElementById('diagInput');
+  const manualSlider = document.getElementById('manualSlider');
+  const scaleReadout = document.getElementById('scaleReadout');
+  const presetsWrap = document.getElementById('presets');
+
+  function computeScale(diagonal, manual){
+    let base = diagonal / BASE_DIAGONAL;
+    let total = base * manual;
+    total = Math.min(MAX_SCALE, Math.max(MIN_SCALE, total));
+    return total;
+  }
+
+  function applyScale(scale){
+    document.documentElement.style.setProperty('--scale', scale.toFixed(3));
+    scaleReadout.textContent = '目前縮放：' + Math.round(scale * 100) + '%';
+  }
+
+  function highlightPreset(diagonal){
+    [...presetsWrap.children].forEach(btn => {
+      btn.classList.toggle('selected', Math.abs(parseFloat(btn.dataset.v) - diagonal) < 0.001);
+    });
+  }
+
+  function refreshPreview(){
+    const diagonal = parseFloat(diagInput.value) || BASE_DIAGONAL;
+    const manual = parseFloat(manualSlider.value) || 1;
+    applyScale(computeScale(diagonal, manual));
+    highlightPreset(diagonal);
+  }
+
+  function loadSettings(){
+    let diagonal = parseFloat(localStorage.getItem('meterDiagonal'));
+    let manual = parseFloat(localStorage.getItem('meterManualScale'));
+    if (isNaN(diagonal)) diagonal = 6.83; // 預設以較常見的大螢幕手機為基準
+    if (isNaN(manual)) manual = 1;
+    diagInput.value = diagonal;
+    manualSlider.value = manual;
+    refreshPreview();
+  }
+
+  presetsWrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    diagInput.value = btn.dataset.v;
+    refreshPreview();
+  });
+
+  diagInput.addEventListener('input', refreshPreview);
+  manualSlider.addEventListener('input', refreshPreview);
+
+  settingsBtn.addEventListener('click', () => { overlay.classList.add('open'); });
+  closeBtn.addEventListener('click', () => { overlay.classList.remove('open'); });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  saveBtn.addEventListener('click', () => {
+    localStorage.setItem('meterDiagonal', diagInput.value);
+    localStorage.setItem('meterManualScale', manualSlider.value);
+    overlay.classList.remove('open');
+  });
+
+  resetBtn.addEventListener('click', () => {
+    localStorage.removeItem('meterDiagonal');
+    localStorage.removeItem('meterManualScale');
+    diagInput.value = 6.83;
+    manualSlider.value = 1;
+    refreshPreview();
+  });
+
+  loadSettings();
 </script>
 </body>
 </html>
