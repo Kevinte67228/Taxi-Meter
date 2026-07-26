@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v6";
+const CACHE_VERSION = "v7";
 const CACHE_NAME = "zhaocai-meter-" + CACHE_VERSION;
 const STATIC_ASSETS = [
   "./",
@@ -15,7 +15,16 @@ self.addEventListener("install", (event) => {
       Promise.all(STATIC_ASSETS.map((url) => cache.add(url).catch(() => {})))
     )
   );
-  self.skipWaiting();
+  // 注意：這裡故意「不」呼叫 self.skipWaiting()。
+  // 讓新版本先進入 waiting 狀態，由頁面偵測到後顯示「發現新版本」提示，
+  // 使用者主動點下去才透過 postMessage 通知這裡 skipWaiting，
+  // 這樣才能做出「假更新按鈕」的體驗，而不是背景默默換掉、使用者無感。
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {
