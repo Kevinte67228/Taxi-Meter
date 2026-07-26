@@ -325,6 +325,27 @@
   .checkbox-row { display:flex; align-items:center; gap:1vw; margin-bottom:1.2dvh; }
   .checkbox-row input { width:6dvh; height:6dvh; }
 
+  .ledger-row {
+    display:flex; align-items:center; justify-content:space-between;
+    background:#111; border:1px solid #333; border-radius:0.8dvh;
+    padding: 1.2dvh 1.4vw; margin-bottom:1dvh; gap:1.4vw;
+  }
+  .ledger-row .ledger-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ledger-row .ledger-amount { color:#9fe870; font-weight:900; white-space:nowrap; }
+  .ledger-row button {
+    background:#3a3a3a; color:#ddd; border:none; border-radius:0.6dvh;
+    padding: 0.8dvh 1.4vw; font-family:"Courier New",monospace; font-size:4.5dvh; cursor:pointer; flex:0 0 auto;
+  }
+  .ledger-empty { color:#777; font-size:4.5dvh; padding: 1dvh 0; }
+
+  .friend-pick-btn {
+    display:block; width:100%; text-align:left;
+    background:#2a2a2a; border:2px solid #4a4a4a; color:#eee;
+    border-radius:1dvh; padding:1.6dvh 1.6vw; margin-bottom:1dvh;
+    font-family:"Courier New",monospace; font-size:6dvh; cursor:pointer;
+  }
+  .friend-pick-btn:active { background:#6bd41f; color:#0a2000; }
+
   .receipt {
     font-family: "Courier New", monospace;
     background:#fff; color:#111;
@@ -369,6 +390,7 @@
           <span class="clock" id="clock">14:13:25</span>
           <span class="wifi-icon">📶</span>
           <span class="gps-icon" id="gpsIcon">○</span>
+          <span id="friendBadge" style="display:none; font-size: calc(2.4dvh * var(--scale)); margin-left:1vw; color:#0a5c1e; font-weight:700;"></span>
         </div>
         <div class="fare-wrap">
           <span class="fare-label">車資</span>
@@ -385,6 +407,19 @@
     <div class="btn" id="btn-stop"><div class="indicator"></div><span class="label">停</span></div>
     <div class="btn" id="btn-print"><div class="indicator"></div><span class="label">列印</span></div>
     <div class="btn" id="btn-highway"><div class="indicator"></div><span class="label">高速公路</span></div>
+    <div class="btn" id="btn-friend"><div class="indicator"></div><span class="label" id="friendBtnLabel">親友價</span></div>
+  </div>
+</div>
+
+<!-- Friend picker overlay -->
+<div class="overlay" id="friendPickerOverlay">
+  <div class="panel">
+    <h2 id="friendPickerTitle">選擇親友</h2>
+    <div class="hint" style="margin-bottom:1.4dvh;">建議按下「停」結束行程後再套用折扣，記帳金額才會是完整車資的折扣後金額。</div>
+    <div id="friendPickerList"></div>
+    <div class="panel-actions" style="margin-top:1.4dvh;">
+      <button class="btn-close" id="friendPickerCancelBtn">取消</button>
+    </div>
   </div>
 </div>
 
@@ -419,6 +454,16 @@
       <input type="range" id="manualSlider" min="0.6" max="1.6" step="0.01" value="1">
       <div class="scale-readout" id="scaleReadout">目前縮放：100%</div>
       <div class="hint">6.83" + 100% 微調＝你目前覺得剛好的大小（已設為預設值）。</div>
+    </div>
+
+    <h3>營業區</h3>
+    <div class="field">
+      <label>目前營業區</label>
+      <select id="zoneSelect" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:6dvh;"></select>
+    </div>
+    <div class="field">
+      <label>營業區清單（每行一個，可自行增減）</label>
+      <textarea id="zoneOptionsText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:5dvh; resize:vertical;"></textarea>
     </div>
 
     <h3>跳表費率</h3>
@@ -521,6 +566,39 @@
     <div class="panel-actions">
       <button class="btn-reset" id="sndTestBtn">測試音效</button>
       <button class="btn-reset" id="sndClearCustomBtn">清除自訂音效</button>
+    </div>
+
+    <h3>親友折扣（好玩功能）</h3>
+    <div class="checkbox-row">
+      <input type="checkbox" id="friendEnabled" checked>
+      <label for="friendEnabled" style="margin:0;">啟用親友折扣按鈕（主畫面會多一顆按鈕）</label>
+    </div>
+    <div class="field">
+      <label>按鈕名稱</label>
+      <input type="text" id="friendButtonName" value="親友價" maxlength="10">
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>折扣（打幾折，1～10，10＝不打折）</label>
+        <input type="number" id="friendDiscountRatio" min="1" max="10" step="0.5" value="8">
+      </div>
+      <div class="field">
+        <div class="checkbox-row" style="margin-top:2.4dvh;">
+          <input type="checkbox" id="friendOnceLimit" checked>
+          <label for="friendOnceLimit" style="margin:0;">防呆：每趟限用一次（預設開啟）</label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>親友名單（每行一位，套用折扣時會列出來選）</label>
+      <textarea id="friendListText" rows="4" style="width:100%; background:#0d0d0d; border:2px solid #444; border-radius:1dvh; color:#fff; padding:1.6dvh 1.4vw; font-family:'Courier New',monospace; font-size:5dvh; resize:vertical;"></textarea>
+    </div>
+
+    <h3>親友月結明細</h3>
+    <div class="hint" style="margin-bottom:1dvh;">每次套用親友折扣，該親友的折扣後車資會累積記在這裡，方便月底一次結清。</div>
+    <div id="friendLedgerContainer"></div>
+    <div class="panel-actions">
+      <button class="btn-reset" id="friendLedgerClearAllBtn">全部結清歸零</button>
     </div>
 
     <div class="panel-actions">
@@ -693,6 +771,8 @@
     configToForm(config);
 
     loadSoundSettings();
+    loadZoneSettings();
+    loadFriendSettings();
   }
 
   /* ================= 按鍵音效 ================= */
@@ -813,6 +893,221 @@
     sndEls.customStatus.textContent = '目前使用預設嗶聲（記得按下方「儲存並套用」）';
   });
 
+  /* ================= 營業區 ================= */
+  const DEFAULT_ZONE = { options: ['新北市', '台北市', '桃園市', '基隆市'], current: '新北市' };
+  let zoneConfig = { ...DEFAULT_ZONE };
+  const zoneSelectEl = document.getElementById('zoneSelect');
+  const zoneOptionsTextEl = document.getElementById('zoneOptionsText');
+
+  function renderZoneSelect(){
+    zoneSelectEl.innerHTML = '';
+    zoneConfig.options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = opt;
+      if (opt === zoneConfig.current) o.selected = true;
+      zoneSelectEl.appendChild(o);
+    });
+  }
+  function zoneConfigToForm(z){
+    zoneOptionsTextEl.value = z.options.join('\n');
+    renderZoneSelect();
+  }
+  function zoneFormToConfig(){
+    const options = zoneOptionsTextEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+    const current = zoneSelectEl.value || (options[0] || '新北市');
+    return { options: options.length ? options : ['新北市'], current };
+  }
+  function applyZoneToDisplay(){
+    document.getElementById('zone').textContent = zoneConfig.current;
+  }
+  function loadZoneSettings(){
+    try {
+      const saved = JSON.parse(localStorage.getItem('meterZoneConfig'));
+      if (saved) zoneConfig = { ...DEFAULT_ZONE, ...saved };
+    } catch(e) {}
+    zoneConfigToForm(zoneConfig);
+    applyZoneToDisplay();
+  }
+  zoneSelectEl.addEventListener('change', () => {
+    zoneConfig.current = zoneSelectEl.value;
+    applyZoneToDisplay();
+  });
+
+  /* ================= 親友折扣 + 月結記帳 ================= */
+  const DEFAULT_FRIEND = {
+    enabled: true, buttonName: '親友價', discountRatio: 8, onceLimit: true,
+    friends: ['爸爸', '媽媽', '老婆', '死黨阿明']
+  };
+  let friendConfig = { ...DEFAULT_FRIEND };
+  let ledger = {}; // { 姓名: 累積金額 }
+  let friendDiscountUsedThisTrip = false;
+  let friendDiscountActive = false;
+  let currentFriendName = null;
+
+  const friendEls = {
+    enabled: document.getElementById('friendEnabled'),
+    buttonName: document.getElementById('friendButtonName'),
+    discountRatio: document.getElementById('friendDiscountRatio'),
+    onceLimit: document.getElementById('friendOnceLimit'),
+    listText: document.getElementById('friendListText'),
+  };
+  const btnFriend = document.getElementById('btn-friend');
+  const friendBtnLabel = document.getElementById('friendBtnLabel');
+  const friendBadge = document.getElementById('friendBadge');
+  const friendPickerOverlay = document.getElementById('friendPickerOverlay');
+  const friendPickerList = document.getElementById('friendPickerList');
+  const friendLedgerContainer = document.getElementById('friendLedgerContainer');
+
+  function friendConfigToForm(c){
+    friendEls.enabled.checked = c.enabled;
+    friendEls.buttonName.value = c.buttonName;
+    friendEls.discountRatio.value = c.discountRatio;
+    friendEls.onceLimit.checked = c.onceLimit;
+    friendEls.listText.value = c.friends.join('\n');
+  }
+  function friendFormToConfig(){
+    const friends = friendEls.listText.value.split('\n').map(s => s.trim()).filter(Boolean);
+    return {
+      enabled: friendEls.enabled.checked,
+      buttonName: friendEls.buttonName.value.trim() || '親友價',
+      discountRatio: Math.min(10, Math.max(1, parseFloat(friendEls.discountRatio.value) || 8)),
+      onceLimit: friendEls.onceLimit.checked,
+      friends: friends.length ? friends : DEFAULT_FRIEND.friends,
+    };
+  }
+
+  function fitLabelToButton(labelEl){
+    const container = labelEl.parentElement;
+    let size = 4.6; // dvh，起始字級（跟其他按鈕上限相近）
+    const minSize = 1.6;
+    labelEl.style.fontSize = size + 'dvh';
+    labelEl.style.whiteSpace = 'nowrap';
+    let guard = 0;
+    while (labelEl.scrollWidth > container.clientWidth - 4 && size > minSize && guard < 60) {
+      size -= 0.15;
+      labelEl.style.fontSize = size + 'dvh';
+      guard++;
+    }
+  }
+
+  function applyFriendButtonUI(){
+    btnFriend.style.display = friendConfig.enabled ? 'flex' : 'none';
+    friendBtnLabel.textContent = friendConfig.buttonName;
+    // 等瀏覽器完成排版後再量測寬度
+    requestAnimationFrame(() => fitLabelToButton(friendBtnLabel));
+  }
+
+  function renderLedger(){
+    const names = Object.keys(ledger).filter(n => ledger[n] && ledger[n] > 0);
+    if (names.length === 0) {
+      friendLedgerContainer.innerHTML = '<div class="ledger-empty">目前沒有未結清的親友帳款</div>';
+      return;
+    }
+    friendLedgerContainer.innerHTML = '';
+    names.forEach(name => {
+      const row = document.createElement('div');
+      row.className = 'ledger-row';
+      const nameEl = document.createElement('span');
+      nameEl.className = 'ledger-name';
+      nameEl.textContent = name;
+      const amountEl = document.createElement('span');
+      amountEl.className = 'ledger-amount';
+      amountEl.textContent = Math.round(ledger[name]) + ' 元';
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = '結清歸零';
+      clearBtn.addEventListener('click', () => {
+        delete ledger[name];
+        saveLedger();
+        renderLedger();
+      });
+      row.appendChild(nameEl);
+      row.appendChild(amountEl);
+      row.appendChild(clearBtn);
+      friendLedgerContainer.appendChild(row);
+    });
+  }
+
+  function saveLedger(){
+    try { localStorage.setItem('meterFriendLedger', JSON.stringify(ledger)); } catch(e) {}
+  }
+
+  function loadFriendSettings(){
+    try {
+      const saved = JSON.parse(localStorage.getItem('meterFriendConfig'));
+      if (saved) friendConfig = { ...DEFAULT_FRIEND, ...saved };
+    } catch(e) {}
+    try {
+      const savedLedger = JSON.parse(localStorage.getItem('meterFriendLedger'));
+      if (savedLedger) ledger = savedLedger;
+    } catch(e) {}
+    friendConfigToForm(friendConfig);
+    applyFriendButtonUI();
+    renderLedger();
+  }
+
+  function openFriendPicker(){
+    friendPickerList.innerHTML = '';
+    if (friendConfig.friends.length === 0) {
+      friendPickerList.innerHTML = '<div class="ledger-empty">尚未設定親友名單，請先到設定裡新增</div>';
+    } else {
+      friendConfig.friends.forEach(name => {
+        const b = document.createElement('button');
+        b.className = 'friend-pick-btn';
+        b.textContent = name;
+        b.addEventListener('click', () => applyFriendDiscount(name));
+        friendPickerList.appendChild(b);
+      });
+    }
+    friendPickerOverlay.classList.add('open');
+  }
+
+  function applyFriendDiscount(name){
+    playBeep();
+    const rawFare = computeMeterFare();
+    const discounted = Math.round(rawFare * friendConfig.discountRatio / 10);
+    friendDiscountActive = true;
+    friendDiscountUsedThisTrip = true;
+    currentFriendName = name;
+    ledger[name] = (ledger[name] || 0) + discounted;
+    saveLedger();
+    renderLedger();
+    friendBadge.style.display = 'inline';
+    friendBadge.textContent = '👥 ' + name + ' 折扣中（' + friendConfig.discountRatio + '折）';
+    friendPickerOverlay.classList.remove('open');
+    updateFareDisplay();
+  }
+
+  document.getElementById('friendPickerCancelBtn').addEventListener('click', () => {
+    friendPickerOverlay.classList.remove('open');
+  });
+  friendPickerOverlay.addEventListener('click', (e) => {
+    if (e.target === friendPickerOverlay) friendPickerOverlay.classList.remove('open');
+  });
+
+  btnFriend.addEventListener('click', () => {
+    if (!friendConfig.enabled) return;
+    if (friendConfig.onceLimit && friendDiscountUsedThisTrip) {
+      playBeep();
+      alert('本趟已經使用過「' + friendConfig.buttonName + '」囉，下一趟才能再用一次喔！');
+      return;
+    }
+    playBeep();
+    openFriendPicker();
+  });
+
+  document.getElementById('friendLedgerClearAllBtn').addEventListener('click', () => {
+    if (Object.keys(ledger).length === 0) return;
+    if (!confirm('確定要把所有親友的未結金額都歸零嗎？此動作無法復原。')) return;
+    ledger = {};
+    saveLedger();
+    renderLedger();
+  });
+
+  friendEls.buttonName.addEventListener('input', () => {
+    friendBtnLabel.textContent = friendEls.buttonName.value.trim() || '親友價';
+    requestAnimationFrame(() => fitLabelToButton(friendBtnLabel));
+  });
+
   settingsBtn.addEventListener('click', () => { overlay.classList.add('open'); });
   closeBtn.addEventListener('click', () => { overlay.classList.remove('open'); });
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
@@ -833,6 +1128,15 @@
     }
     pendingCustomSound = undefined;
 
+    zoneConfig = zoneFormToConfig();
+    localStorage.setItem('meterZoneConfig', JSON.stringify(zoneConfig));
+    renderZoneSelect();
+    applyZoneToDisplay();
+
+    friendConfig = friendFormToConfig();
+    localStorage.setItem('meterFriendConfig', JSON.stringify(friendConfig));
+    applyFriendButtonUI();
+
     overlay.classList.remove('open');
     updateFareDisplay();
   });
@@ -842,6 +1146,8 @@
     localStorage.removeItem('meterManualScale');
     localStorage.removeItem('meterFareConfig');
     localStorage.removeItem('meterSoundConfig');
+    localStorage.removeItem('meterZoneConfig');
+    localStorage.removeItem('meterFriendConfig');
     diagInput.value = BASE_DIAGONAL;
     manualSlider.value = 1;
     config = { ...DEFAULT_CONFIG };
@@ -851,6 +1157,12 @@
     pendingCustomSound = undefined;
     sndEls.fileInput.value = '';
     soundConfigToForm(soundConfig);
+    zoneConfig = { ...DEFAULT_ZONE };
+    zoneConfigToForm(zoneConfig);
+    applyZoneToDisplay();
+    friendConfig = { ...DEFAULT_FRIEND };
+    friendConfigToForm(friendConfig);
+    applyFriendButtonUI();
     updateFareDisplay();
   });
 
@@ -904,7 +1216,10 @@
   }
 
   function updateFareDisplay(){
-    const meterFare = computeMeterFare();
+    let meterFare = computeMeterFare();
+    if (friendDiscountActive) {
+      meterFare = Math.round(meterFare * friendConfig.discountRatio / 10);
+    }
     document.getElementById('fare').textContent = meterFare;
     document.getElementById('toll').textContent = tollFee > 0 ? tollFee : '.';
     document.getElementById('km').textContent = totalDistanceKm.toFixed(1);
@@ -977,6 +1292,8 @@
     if (elapsedTimerId) { clearInterval(elapsedTimerId); elapsedTimerId = null; }
     totalDistanceKm = 0; lowSpeedSeconds = 0; elapsedSeconds = 0; tollFee = 0;
     lastPos = null; gpsOk = false; startedAt = null;
+    friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null;
+    friendBadge.style.display = 'none';
     document.getElementById('fare').textContent = '0';
     document.getElementById('toll').textContent = '.';
     document.getElementById('km').textContent = '.0';
