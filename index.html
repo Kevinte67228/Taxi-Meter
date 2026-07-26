@@ -361,6 +361,11 @@
 </head>
 <body>
 
+<div id="splashScreen" style="position:fixed; inset:0; z-index:300; background:linear-gradient(180deg,#e0b45f 0%,#c9973d 45%,#a97b28 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:4vw;">
+  <div id="splashFleetName" style="font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif; font-size:8dvh; font-weight:900; color:#0a0a0a; letter-spacing:0.3vw;">招財衛星車隊</div>
+  <div style="font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif; font-size:3dvh; color:#4a3a18; margin-top:2dvh; font-weight:700;">計程計費器 啟動中…</div>
+</div>
+
 <div class="rotate-hint">請將手機轉為橫向 📱↺<br>Please rotate your phone to landscape</div>
 
 <div class="meter">
@@ -430,6 +435,12 @@
 
     <div class="disclaimer">
       ⚠️ 下方跳表費率為公開資訊整理的參考預設值（非即時查詢），實際費率請以當地公路 / 交通局最新公告為準。你可以直接在下面修改成正確數字，設定會保存在這支手機上。
+    </div>
+
+    <h3>車隊名稱</h3>
+    <div class="field">
+      <label>車隊名稱（會顯示在開機畫面與列印明細抬頭）</label>
+      <input type="text" id="fleetNameInput" value="招財衛星車隊" maxlength="16">
     </div>
 
     <h3>螢幕字級</h3>
@@ -615,7 +626,7 @@
 <div class="overlay" id="receiptOverlay">
   <div class="panel" style="padding:0; background:transparent; border:none; width:min(760px,98vw);">
     <div class="receipt" id="receiptContent">
-      <div style="text-align:center; font-weight:900; font-size:7dvh;">招財衛星車隊</div>
+      <div style="text-align:center; font-weight:900; font-size:7dvh;" id="receiptFleetName">招財衛星車隊</div>
       <div style="text-align:center; font-size:4.5dvh;">計程車費證明</div>
       <hr>
       <div class="rowline"><span>日期時間</span><span id="rcTime">--</span></div>
@@ -635,6 +646,27 @@
 </div>
 
 <script>
+  /* ================= 車隊名稱 + 開機畫面 ================= */
+  const DEFAULT_FLEET_NAME = '招財衛星車隊';
+  function getFleetName(){
+    return localStorage.getItem('meterFleetName') || DEFAULT_FLEET_NAME;
+  }
+  function applyFleetName(name){
+    document.getElementById('splashFleetName').textContent = name;
+    document.getElementById('receiptFleetName').textContent = name;
+    const input = document.getElementById('fleetNameInput');
+    if (input) input.value = name;
+  }
+  applyFleetName(getFleetName());
+
+  setTimeout(() => {
+    const splash = document.getElementById('splashScreen');
+    if (!splash) return;
+    splash.style.transition = 'opacity 0.4s ease';
+    splash.style.opacity = '0';
+    setTimeout(() => { splash.style.display = 'none'; }, 420);
+  }, 3000);
+
   /* ================= 即時時鐘 ================= */
   function pad(n){ return n.toString().padStart(2,'0'); }
   function tick(){
@@ -1137,6 +1169,10 @@
     localStorage.setItem('meterFriendConfig', JSON.stringify(friendConfig));
     applyFriendButtonUI();
 
+    const fleetName = (document.getElementById('fleetNameInput').value.trim()) || DEFAULT_FLEET_NAME;
+    localStorage.setItem('meterFleetName', fleetName);
+    applyFleetName(fleetName);
+
     overlay.classList.remove('open');
     updateFareDisplay();
   });
@@ -1148,6 +1184,7 @@
     localStorage.removeItem('meterSoundConfig');
     localStorage.removeItem('meterZoneConfig');
     localStorage.removeItem('meterFriendConfig');
+    localStorage.removeItem('meterFleetName');
     diagInput.value = BASE_DIAGONAL;
     manualSlider.value = 1;
     config = { ...DEFAULT_CONFIG };
@@ -1163,6 +1200,7 @@
     friendConfig = { ...DEFAULT_FRIEND };
     friendConfigToForm(friendConfig);
     applyFriendButtonUI();
+    applyFleetName(DEFAULT_FLEET_NAME);
     updateFareDisplay();
   });
 
