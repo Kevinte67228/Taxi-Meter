@@ -52,19 +52,18 @@
     align-items:center;
     gap: 1.2vw;
     height: 8dvh;
-    padding: 0 0.6vw 0.8dvh;
+    padding: 0 3.5vw 0.8dvh 0.6vw;
   }
   .icon-btn {
     width: 6.6dvh; height: 6.6dvh;
     border-radius: 50%;
-    background: #0a0a0a;
-    border: 3px solid #f3d27a;
-    color:#f3d27a;
+    background: transparent;
+    border: 3px solid #3a2c10;
+    color:#3a2c10;
     font-size: 3.4dvh;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     user-select:none;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.6), 0 0 0 2px rgba(0,0,0,0.4);
   }
   .icon-btn:active { transform: scale(0.94); }
 
@@ -82,17 +81,17 @@
 
   .top-labels {
     color:#eee;
-    display:flex;
+    display:grid;
+    grid-template-columns: 24% 22% 1fr 14%;
     align-items:center;
     font-size: calc(3.4dvh * var(--scale));
     font-weight:700;
     letter-spacing: 0.3vw;
-    padding: 0 0.6vw 0.8dvh;
+    padding: 0 1.4vw 0.8dvh;
     white-space:nowrap;
     flex: 0 0 auto;
   }
-  .top-labels span { margin-right: 3.5vw; }
-  .top-labels span:last-child { margin-right:0; }
+  .top-labels span { overflow:hidden; text-overflow:clip; }
 
   .lcd {
     flex:1 1 auto;
@@ -115,7 +114,8 @@
   }
 
   .lcd-row1 {
-    display:flex;
+    display:grid;
+    grid-template-columns: 24% 22% 1fr 14%;
     align-items:center;
     font-weight:700;
     border-bottom: 3px solid rgba(20,74,6,0.35);
@@ -409,9 +409,9 @@
         <button data-v="6.3">6.3"</button>
         <button data-v="6.5">6.5"</button>
         <button data-v="6.7">6.7"</button>
-        <button data-v="6.83">6.83" (Redmi Note 15 Pro)</button>
+        <button data-v="6.83">6.83"</button>
         <button data-v="6.9">6.9"</button>
-        <button data-v="7.6">7.6" (摺疊/平板)</button>
+        <button data-v="7.6">7.6"</button>
       </div>
     </div>
     <div class="field">
@@ -772,13 +772,13 @@
         enableHighAccuracy: true, maximumAge: 1000, timeout: 10000
       });
     } else {
-      alert('這支裝置/瀏覽器不支援定位功能，將僅以低速計時方式試算車資。');
+      alert('這支裝置/瀏覽器不支援定位功能，將無法累計里程或低速計時，車資僅會顯示起跳金額。');
     }
 
     if (!elapsedTimerId) {
       elapsedTimerId = setInterval(() => {
         elapsedSeconds += 1;
-        if (!gpsOk) lowSpeedSeconds += 1; // 沒有 GPS 時，退回以時間計費
+        // 抓不到 GPS 時，低速計時秒數暫停累加，避免車資無限往上跳
         updateFareDisplay();
       }, 1000);
     }
