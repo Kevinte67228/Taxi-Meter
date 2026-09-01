@@ -373,6 +373,12 @@
   <span class="update-banner-text">發現新版本，點此更新</span>
 </div>
 
+<div id="gpsWarningBanner" style="display:none; position:fixed; left:0; right:0; top:0; z-index:240; align-items:center; justify-content:center; gap:2vw; background:#b71c1c; color:#fff; padding:1.4dvh 3vw; font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif; font-size:2.4dvh; font-weight:700; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+  <span>⚠️</span>
+  <span id="gpsWarningText">GPS 定位權限未開啟，請於瀏覽器設定中允許存取位置</span>
+  <span style="font-size:2dvh; opacity:0.8; cursor:pointer; margin-left:auto;" onclick="hideGpsWarningBanner()">✕</span>
+</div>
+
 <div class="meter">
   <span class="serial">04490</span>
 
@@ -1070,8 +1076,6 @@
 
   function fitLabelToButton(labelEl){
     const container = labelEl.parentElement;
-    // 先清空 inline 字級，讓它套用跟其他按鈕相同的 CSS 公式（含 --scale 縮放），
-    // 再從這個「跟兄弟按鈕一致」的基準開始，只有塞不下才逐步縮小
     labelEl.style.fontSize = '';
     labelEl.style.whiteSpace = 'nowrap';
     let sizePx = parseFloat(window.getComputedStyle(labelEl).fontSize) || 24;
@@ -1086,7 +1090,6 @@
   function applyFriendButtonUI(){
     btnFriend.style.display = friendConfig.enabled ? 'flex' : 'none';
     friendBtnLabel.textContent = friendConfig.buttonName;
-    // 等瀏覽器完成排版後再量測寬度
     requestAnimationFrame(() => fitLabelToButton(friendBtnLabel));
   }
 
@@ -1159,7 +1162,6 @@
     if (!friendDiscountActive) {
       friendLedgerBaseline = ledger[name] || 0;
     } else if (name !== currentFriendName) {
-      // 換人時，以新的人目前的帳款當作新的記帳基準，但折扣倍率繼續疊加
       friendLedgerBaseline = ledger[name] || 0;
     }
     friendDiscountActive = true;
@@ -1284,6 +1286,41 @@
   let gpsOk = false;
   let startedAt = null;
   let lastDisplayedFare = null; // 用來偵測車資是否跳錶,以便播放音效
+  let wakeLock = null;
+
+  /* Screen Wake Lock 防止螢幕休眠導致 GPS 被系統關閉 */
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        if (!wakeLock) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {}
+    }
+  }
+  function releaseWakeLock() {
+    if (wakeLock !== null) {
+      wakeLock.release().then(() => { wakeLock = null; }).catch(() => { wakeLock = null; });
+    }
+  }
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible' && meterState === 'running') {
+      requestWakeLock();
+    }
+  });
+
+  function showGpsWarningBanner(msg) {
+    const banner = document.getElementById('gpsWarningBanner');
+    const text = document.getElementById('gpsWarningText');
+    if (banner && text) {
+      text.textContent = msg;
+      banner.style.display = 'flex';
+    }
+  }
+  function hideGpsWarningBanner() {
+    const banner = document.getElementById('gpsWarningBanner');
+    if (banner) banner.style.display = 'none';
+  }
 
   function haversineKm(lat1, lon1, lat2, lon2){
     const R = 6371;
@@ -1332,8 +1369,6 @@
         renderLedger();
       }
     }
-    // 跳錶音效：只有金額比上一次顯示的「往上跳」才播放，
-    // 避免歸零、套用折扣讓金額變小時也跟著誤響
     if (lastDisplayedFare !== null && meterFare > lastDisplayedFare) {
       playBeep();
     }
@@ -1349,6 +1384,7 @@
 
   function onPosition(pos){
     gpsOk = true;
+    hideGpsWarningBanner();
     const { latitude, longitude, accuracy, speed } = pos.coords;
     const now = Date.now();
     if (lastPos) {
@@ -1372,7 +1408,28 @@
 
   function onPositionError(err){
     gpsOk = false;
+    if (err.code === err.PERMISSION_DENIED) {
+      showGpsWarningBanner('GPS 定位權限被拒絕。請在瀏覽器設定或網址列鎖頭中允許開啟定位。');
+    } else if (err.code === err.POSITION_UNAVAILABLE) {
+      showGpsWarningBanner('無法取得 GPS 訊號，請確認手機已開啟定位系統。');
+    } else if (err.code === err.TIMEOUT) {
+      // 搜尋訊號中，不強制跳紅框彈窗
+    }
     updateFareDisplay();
+  }
+
+  /* 開啟 App 時直接調用 GPS 定位（預熱 GPS 訊號並直接請求定位權限） */
+  function initGPS(){
+    if (watchId !== null) return;
+    if ('geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      });
+    } else {
+      showGpsWarningBanner('這支裝置/瀏覽器不支援 GPS 定位功能。');
+    }
   }
 
   function startMeter(){
@@ -1380,18 +1437,13 @@
     meterState = 'running';
     if (!startedAt) startedAt = Date.now();
 
-    if ('geolocation' in navigator) {
-      watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, {
-        enableHighAccuracy: true, maximumAge: 1000, timeout: 10000
-      });
-    } else {
-      alert('這支裝置/瀏覽器不支援定位功能，將無法累計里程或低速計時，車資僅會顯示起跳金額。');
-    }
+    // 確保 GPS 處於監聽狀態
+    initGPS();
+    requestWakeLock();
 
     if (!elapsedTimerId) {
       elapsedTimerId = setInterval(() => {
         elapsedSeconds += 1;
-        // 抓不到 GPS 時，低速計時秒數暫停累加，避免車資無限往上跳
         updateFareDisplay();
       }, 1000);
     }
@@ -1400,17 +1452,17 @@
 
   function stopMeter(){
     meterState = 'stopped';
-    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    releaseWakeLock();
     if (elapsedTimerId) { clearInterval(elapsedTimerId); elapsedTimerId = null; }
     updateFareDisplay();
   }
 
   function resetMeter(){
     meterState = 'idle';
-    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    releaseWakeLock();
     if (elapsedTimerId) { clearInterval(elapsedTimerId); elapsedTimerId = null; }
     totalDistanceKm = 0; lowSpeedSeconds = 0; elapsedSeconds = 0; tollFee = 0;
-    lastPos = null; gpsOk = false; startedAt = null;
+    lastPos = null; startedAt = null;
     friendDiscountActive = false; friendDiscountUsedThisTrip = false; currentFriendName = null; friendLedgerBaseline = 0;
     friendDiscountMultiplier = 1; friendDiscountPressCount = 0;
     friendBadgeWrap.style.display = 'none';
@@ -1419,7 +1471,8 @@
     document.getElementById('toll').textContent = '.';
     document.getElementById('km').textContent = '.0';
     document.getElementById('timerField').textContent = '：：0';
-    document.getElementById('gpsIcon').textContent = '○';
+    // 注意：GPS watchId 保持開機即持續背景監聽，不因 reset 關閉，確保訊號定位隨時就緒
+    updateFareDisplay();
   }
 
   /* ================= 按鍵行為 ================= */
@@ -1480,6 +1533,7 @@
   loadAllSettings();
   resetMeter();
   setActiveStateButton('btn-empty');
+  initGPS(); // 開啟 App 時直接調用 GPS 定位
 </script>
 </body>
 </html>
